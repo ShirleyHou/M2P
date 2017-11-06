@@ -113,38 +113,43 @@ def DTA_MSA(nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode,links_toNode,li
     else:
         simTT = cvn2tt(cvn_up, cvn_up,dt,totT,links_id,links_fromNode,links_toNode,links_length,links_freeSpeed,links_capacity,links_kJam)
 
-    '''
-    build cvn2tt here!
-    '''
-    #gap_dt = inf
+    #simTT OK.
+
+    gap_dt = inf
     TF = []#or numpy.zeros(0)
+    return 'test complete'
 
 
-
-
+'''
+    return simTT
+'''
 def cvn2tt(cvn_up, cvn_down, dt, totT, links_id,links_fromNode,links_toNode,links_length,links_freeSpeed,links_capacity,links_kJam):
 
     simTT = np.zeros((links_id.shape[0],totT+1))#<--length of the links_id
 
     timeSteps = dt*np.arange(0,totT+1, 1)
 
-    #OK simTT & timeSteps
-
     for l in range(0, links_id.shape[0]):
         down, iun = np.unique(cvn_down[l,:], return_index=True)
         if down.shape[0]<=1:
             simTT[l,:]=links_length[l]/links_freeSpeed[l]
         else:
-            simTT[l,:]= interp1d(down,timeSteps[iun])(cvn_up[l,:])-dt*np.arrange(0,totT+1,1)
+            f = interp1d(down,timeSteps[iun])
+            interp = f(cvn_up[l,:])
+            simTT[l,:]=np.maximum(interp-dt*np.arange(0,totT+1,1),links_length[l]/links_freeSpeed[l])
+            simTT[l,cvn_up[l,:]-cvn_down[l,:]<0.001] = links_length[l]/links_freeSpeed[l]
+            for t in range(1,totT+2):
+                simTT[l,t]= np.maximum(simTT[l,t],simTT[l,t-1]-dt)
+
+    return simTT
 
 
 
 
 
 
-
-[cvn_up,cvn_down,TF] = DTA_MSA(nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode,links_toNode,links_length,links_freeSpeed,links_capacity,links_kJam,origins,destinations, ODmatrix, dt, totT, rc_dt, max_It, rc_agg);
-
+a = DTA_MSA(nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode,links_toNode,links_length,links_freeSpeed,links_capacity,links_kJam,origins,destinations, ODmatrix, dt, totT, rc_dt, max_It, rc_agg);
+print(a)
 '''needs complete'''
 '''transform CVN values to travel times'''
 #[simTT] = cvn2tt(sum(cvn_up,3),sum(cvn_down,3),dt,totT,links);

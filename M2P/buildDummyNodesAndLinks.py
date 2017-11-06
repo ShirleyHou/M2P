@@ -26,12 +26,15 @@ def buildDummyNodesAndLinks(nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode
 
     #origins & destinations
     origins = np.where(np.sum(sumOD,1)>0)[0] #row  test:[12217 24186 24187] 1d array
-    print(origins)
+
     destinations = np.where(np.sum(sumOD,0)>0)[0] #should here be a [0] or 1?????? <---- issue
-    print(destinations)
+
     issued_origins = []
+
     map_dummyorigins = []
+
     linkToNode_list = links_toNode #local rename
+
     linkFromNode_list = links_fromNode
 
 
@@ -41,7 +44,7 @@ def buildDummyNodesAndLinks(nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode
         if outgoing_links.size==0 and incoming_links.size==0:
             print('Origin '+origins[i]+' has no incoming or outgoing links!')
         elif incoming_links.size>=1:
-            #print('get new origin in the list')
+
             issued_origins.append(origins[i])
 
     #issued_origins = np.asarray(issued_origins)#<--change as a numpy array, delete this if list is required.
