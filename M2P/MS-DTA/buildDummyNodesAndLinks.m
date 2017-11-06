@@ -37,6 +37,8 @@ for i=1:1:length(issued_origins)
     new_links=[new_links;{size(new_links,1)+1,size(new_nodes,1),issued_origins(i),0.05,60,10^6,10^6}];  %links=table(id,fromNode,toNode,length,freeSpeed,capacity,kJam);
     map_dummyorigins=[map_dummyorigins;[issued_origins(i),size(new_nodes,1)]];
 end
+
+
 %conversion of demand from original origin to dummy origin
 for i=1:1:length(issued_origins)
     for t=1:1:length(ODmatrices)

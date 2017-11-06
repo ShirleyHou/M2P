@@ -23,6 +23,7 @@ load = sio.loadmat('data_sliced_reduced.mat')
 
 #find the corrsponding name in the workspace, each name is a ndnumpy array
 demand = load['demand_r']
+print(demand.shape)
 nodes_id = load['nodes_id']
 nodes_xco = load['nodes_xco']
 nodes_yco = load['nodes_yco']
@@ -84,9 +85,7 @@ for i in range(0, ODmatrices.shape[1]):
 #print(ODmatrices[0,0]+ODmatrices[0,1])#<--test whether lil matrix could be added linearly
 
 
-'''needs complete'''
-'''complete the buildDummyNodesAndLinks method'''
-'''return 3 separate ndarray'''
+
 '''@input : All nodes field, all links field, ODmatrices matrix'''
 
 #nodes, links, ODmatrices = buildDummyNodesAndLinks(nodes_id,nodes_xco,nodes_yco,links_id,links_freeSpeed,links_capacity,links_length,links_kJam,links_toNode,links_fromNode,ODmatrices);
@@ -116,12 +115,53 @@ Function name: buildDummyNodesAndLinks
 @return: new nodes, links, ODmatrices attributes.
 '''
 
-nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode,links_toNode,links_length,links_freeSpeed,links_capacity,links_kJam,ODmatrices = \
-buildDummyNodesAndLinks(nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode,links_toNode,links_length,links_freeSpeed,links_capacity,links_kJam,ODmatrices)
+nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode,links_toNode,links_length,links_freeSpeed,links_capacity,links_kJam,ODmatrices = buildDummyNodesAndLinks(nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode,links_toNode,links_length,links_freeSpeed,links_capacity,links_kJam,ODmatrices)
+for i in range(0,ODmatrices.shape[1]):
+    print('{1,',i,'}',ODmatrices[0,i])
+
+dt = 0.5
+totT = round(20/dt)
+timeSeries = np.arange(0.0,0.5*(ODmatrices.shape[1]),0.5)
+
 
 '''
 Function name: buildODmatrix
 @input: ODmatrices, timeSeries, dt,totT
 @output: ODmatrix
-def buildODmatrix(ODmatrices,timeSeries,dt,totT):
 '''
+
+def buildODmatrix(ODmatrices,timeSeries,dt,totT):
+
+    #find all non empty od cells
+    sumOD = ODmatrices[0,0];
+    for i in range(0,ODmatrices.shape[1]):
+        sumOD = sumOD + ODmatrices[0,i]
+
+    origins = np.where(np.sum(sumOD,1)>0)[0] #row  test:[12217 24186 24187] 1d array
+    destinations = np.where(np.sum(sumOD,0)>0)[1] #col, test: [12200 19974] 1d array
+    print(origins)
+    print(destinations)
+
+    timeSteps = dt*np.arange(0,totT+0.5,1)
+
+    for t in range(0,1):
+        sliceA = np.where(timeSeries<=timeSteps[t])[0] #<--smaller or equal to
+        sliceA = sliceA[sliceA.size-1]
+
+        sliceB = np.where(timeSeries<timeSteps[t+1])[0] #<--smaller
+        sliceB = sliceB[sliceB.size-1]
+        #print(sliceA,sliceB)
+        #tempSlices = np.asarray(np.unique(sliceA,sliceB)) #<--an array
+        tempSlices = np.unique(sliceA,sliceB) #<--a tuple
+        print(len(tempSlices))
+        if(len(tempSlices)==1):
+            #print('try return')
+            temp_odmatrix = ODmatrices[min(ODmatrices.shape[1],tempSlices[0])][origins,destinations]
+            for i in range(0, temp_odmatrix.shape[0]):
+                for j in range (0,temp_odmatrix.shape[0]):
+                    od_matrix[i,j,t]=full(temp_odmatrix(i,j));
+
+    return(destinations)
+    #return ODmatrices[0,1][origins,destinations]
+test = buildODmatrix(ODmatrices,timeSeries,dt,totT)
+#print(test)

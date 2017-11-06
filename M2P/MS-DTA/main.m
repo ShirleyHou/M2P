@@ -5,8 +5,7 @@ close all
 javaclasspath('javaclass');
 
 %%%%%%%%%%%%%%%%%
-load('shirley_r.mat','links','nodes')
-load('shirley_r.mat','demand_r')
+load('shirley_r.mat','links','nodes','demand_r')
 
 no_nodes=size(nodes,1);
 ODmatrices=cell(1,size(demand_r,2)-2);
@@ -28,7 +27,7 @@ end
 % total number of time steps has to be defined.
 
 %setup the time interval and total number of time steps
-dt = 1;
+dt = 0.5;
 totT = round(20/dt);
 
 timeSeries=0:0.5:0.5*(size(ODmatrices,2)-1); %matrix of 1*size(ODmatrices)
@@ -64,6 +63,6 @@ rc_agg = 'last';
 % are transformed into travel times for every link in the network. The
 % travel times are compared for the main route (from split to merge) and
 % the alternative route.
-%calculate the simulated travel times
+%calculate the simulated travel times]
 [simTT] = cvn2tt(sum(cvn_up,3),sum(cvn_down,3),dt,totT,links);
 
