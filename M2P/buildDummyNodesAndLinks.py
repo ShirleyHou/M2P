@@ -16,6 +16,7 @@ def buildDummyNodesAndLinks(nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode
     new_links_capacity = links_capacity
     new_links_kJam = links_kJam
     new_ODmatrices = ODmatrices
+
     #local name everything...
 
     #sum od matrix
@@ -25,8 +26,9 @@ def buildDummyNodesAndLinks(nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode
 
     #origins & destinations
     origins = np.where(np.sum(sumOD,1)>0)[0] #row  test:[12217 24186 24187] 1d array
-    destinations = np.where(np.sum(sumOD,0)>0)[1] #col, test: [12200 19974] 1d array
-
+    print(origins)
+    destinations = np.where(np.sum(sumOD,0)>0)[0] #should here be a [0] or 1?????? <---- issue
+    print(destinations)
     issued_origins = []
     map_dummyorigins = []
     linkToNode_list = links_toNode #local rename
@@ -69,19 +71,21 @@ def buildDummyNodesAndLinks(nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode
      conversion of demand from originial origin to dummy origin
     '''
 
+    addrow = 0
+    for i in range(0,len(issued_origins)):
 
-    for i in range(0,len(issued_origins)):#0->1
-
-        for t in range(0, ODmatrices.shape[1]):#0--41
+        for t in range(0, ODmatrices.shape[1]):
 
 
             temp_demand = new_ODmatrices[0,t][issued_origins[i],:]
-
             #NEEDTO HAVE A NEW ROW HERE.
-            rows = map_dummyorigins[i,1]-new_ODmatrices[0,t].shape[1]
+            rows = map_dummyorigins[i,1]-new_ODmatrices[0,t].shape[0]
             cols = new_ODmatrices[0,t].shape[1]
-            udpate_ODmatrices_cell=lil_matrix((rows,cols))
-            new_ODmatrices[0,t]=vstack([new_ODmatrices[0,t],udpate_ODmatrices_cell]).tolil()
+            if(rows>0):
+
+                addrow =addrow+1
+                udpate_ODmatrices_cell=lil_matrix((rows,cols))
+                new_ODmatrices[0,t]=vstack([new_ODmatrices[0,t],udpate_ODmatrices_cell]).tolil()
             #INCREMENT OF NEW ROW COMPLETED
 
 
@@ -131,21 +135,23 @@ def buildDummyNodesAndLinks(nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode
             rows = new_ODmatrices[0,t].shape[0]
             cols = map_dummydestinations[i,1]-new_ODmatrices[0,t].shape[1]
 
-            if(map_dummydestinations[i,1]-new_ODmatrices[0,t].shape[1]<=0):
-                cols = 1
-            '''
-            put in extra rows and columns in each ODmatrice sparse lil_matrix.
-            Hence avoiding the index overflow issue due to the immutable length property of numpy sparse matrix
-            '''
+            if(cols>0):
+
+                '''
+                put in extra rows and columns in each ODmatrice sparse lil_matrix.
+                Hence avoiding the index overflow issue due to the immutable length property of numpy sparse matrix
+                '''
+                udpate_ODmatrices_cell=lil_matrix((rows, cols))
+                new_ODmatrices[0,t]=hstack([new_ODmatrices[0,t],udpate_ODmatrices_cell]).tolil()
             #use hstack and vstack to complete ODmatrice reshape
 
             '''add new row'''
-            udpate_ODmatrices_cell=lil_matrix((rows, cols))
-            new_ODmatrices[0,t]=hstack([new_ODmatrices[0,t],udpate_ODmatrices_cell]).tolil()
+
 
 
             '''add new column'''
             if(new_ODmatrices[0,t].shape[0]<new_ODmatrices[0,t].shape[1]):
+                addrow =addrow+1
                 udpate_ODmatrices_cell=lil_matrix((new_ODmatrices[0,t].shape[1]-new_ODmatrices[0,t].shape[0],new_ODmatrices[0,t].shape[1]))
                 new_ODmatrices[0,t]=vstack([new_ODmatrices[0,t],udpate_ODmatrices_cell]).tolil()
             #use hstack and vstack to complete ODmatrice reshape
