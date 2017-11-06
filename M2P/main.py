@@ -8,6 +8,7 @@ Suggests to take a look at the Node object and write a new comparator in python.
 '''
 import numpy as np
 from buildDummyNodesAndLinks import buildDummyNodesAndLinks
+from buildODmatrix import buildODmatrix
 #------------------file inport --------------------#
 '''import links_nodes.mat and demand.mat
 Workspace 2 fields:
@@ -66,9 +67,9 @@ from scipy.sparse import lil_matrix #list of list format sparse matrix, the equi
 
 for i in range(0, ODmatrices.shape[1]):
     ODmatrices[0,i]=lil_matrix((no_nodes, no_nodes))
-    #print(ODmatrices[0,1].shape) <-- check the size of lil_matrix
 
-    #print(ODmatrices[0,i][1,1])
+
+
     for j in range(0, demand.shape[0]): #<1~578260
 
         O_node = np.where(nodes_id==demand[j,0])[0][0] #outcome of np.where is a turple--> 1st in the tuple-->number
@@ -81,25 +82,36 @@ for i in range(0, ODmatrices.shape[1]):
 
 
 
-#print('ODmatrices: ',ODmatrices.shape[1])
-#print(ODmatrices[0,0]+ODmatrices[0,1])#<--test whether lil matrix could be added linearly
 
+#===========function: buildDummyNodesAndLinks========
+'''
+Function name: buildDummyNodesAndLinks
+@input: all nodes , links attributes, ODmatrices
+@return: new nodes, links, ODmatrices attributes.
+'''
+nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode,links_toNode,links_length,links_freeSpeed,links_capacity,links_kJam,ODmatrices = buildDummyNodesAndLinks(nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode,links_toNode,links_length,links_freeSpeed,links_capacity,links_kJam,ODmatrices)
 
-
-'''@input : All nodes field, all links field, ODmatrices matrix'''
-
-#nodes, links, ODmatrices = buildDummyNodesAndLinks(nodes_id,nodes_xco,nodes_yco,links_id,links_freeSpeed,links_capacity,links_length,links_kJam,links_toNode,links_fromNode,ODmatrices);
+#==================end of function===================
 
 dt = 0.5
 totT = round(20/dt)
+timeSeries = np.arange(0.0,0.5*(ODmatrices.shape[1]),0.5)
 
-#ODmatrix, origins, destinations = buildODmatrix(ODmatrices,timeSeries,dt,totT)
+#===========function: buildOdmatrix==================
+'''
+Function name: buildODmatrix
+@input: ODmatrices, timeSeries, dt,totT
+@output: ODmatrix
+'''
 
+ODmatrix,origins,destinations = buildODmatrix(ODmatrices,timeSeries,dt,totT)
+
+#==================end of function===================
 '''needs complete'''
 '''set up dynamic equilibrium simulation'''
-rc_dt = 10*dt
-max_it = 1;
-rc_agg = "last";
+#rc_dt = 10*dt
+#max_it = 1
+#rc_agg = "last"
 #[cvn_up,cvn_down,TF] = DTA_MSA(nodes,links,origins,destinations,ODmatrix,dt,totT,rc_dt,max_it,rc_agg);
 
 
@@ -108,60 +120,6 @@ rc_agg = "last";
 #[simTT] = cvn2tt(sum(cvn_up,3),sum(cvn_down,3),dt,totT,links);
 
 
-#===========function: buildDummyNodesAndLinks========
-'''
-Function name: buildDummyNodesAndLinks
-@input: all nodes , links attributes, ODmatrices
-@return: new nodes, links, ODmatrices attributes.
-'''
-
-nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode,links_toNode,links_length,links_freeSpeed,links_capacity,links_kJam,ODmatrices = buildDummyNodesAndLinks(nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode,links_toNode,links_length,links_freeSpeed,links_capacity,links_kJam,ODmatrices)
-for i in range(0,ODmatrices.shape[1]):
-    print('{1,',i,'}',ODmatrices[0,i])
-
-dt = 0.5
-totT = round(20/dt)
-timeSeries = np.arange(0.0,0.5*(ODmatrices.shape[1]),0.5)
 
 
-'''
-Function name: buildODmatrix
-@input: ODmatrices, timeSeries, dt,totT
-@output: ODmatrix
-'''
 
-def buildODmatrix(ODmatrices,timeSeries,dt,totT):
-
-    #find all non empty od cells
-    sumOD = ODmatrices[0,0];
-    for i in range(0,ODmatrices.shape[1]):
-        sumOD = sumOD + ODmatrices[0,i]
-
-    origins = np.where(np.sum(sumOD,1)>0)[0] #row  test:[12217 24186 24187] 1d array
-    destinations = np.where(np.sum(sumOD,0)>0)[1] #col, test: [12200 19974] 1d array
-    print(origins)
-    print(destinations)
-
-    timeSteps = dt*np.arange(0,totT+0.5,1)
-
-    for t in range(0,1):
-        sliceA = np.where(timeSeries<=timeSteps[t])[0] #<--smaller or equal to
-        sliceA = sliceA[sliceA.size-1]
-
-        sliceB = np.where(timeSeries<timeSteps[t+1])[0] #<--smaller
-        sliceB = sliceB[sliceB.size-1]
-        #print(sliceA,sliceB)
-        #tempSlices = np.asarray(np.unique(sliceA,sliceB)) #<--an array
-        tempSlices = np.unique(sliceA,sliceB) #<--a tuple
-        print(len(tempSlices))
-        if(len(tempSlices)==1):
-            #print('try return')
-            temp_odmatrix = ODmatrices[min(ODmatrices.shape[1],tempSlices[0])][origins,destinations]
-            for i in range(0, temp_odmatrix.shape[0]):
-                for j in range (0,temp_odmatrix.shape[0]):
-                    od_matrix[i,j,t]=full(temp_odmatrix(i,j));
-
-    return(destinations)
-    #return ODmatrices[0,1][origins,destinations]
-test = buildODmatrix(ODmatrices,timeSeries,dt,totT)
-#print(test)
