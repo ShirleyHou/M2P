@@ -1,20 +1,20 @@
 import numpy as np
-from scipy.sparse import lil_matrix, vstack, hstack
+from scipy.sparse import lil_matrix, coo_matrix, vstack, hstack
 
 
-def buildDummyNodesAndLinks(nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode,links_toNode,links_length,links_freeSpeed,links_capacity,links_kJam,ODmatrices):
+def buildDummyNodesAndLinks(nodes, links, ODmatrices):
 
     #local rename
-    new_nodes_id = nodes_id;
-    new_nodes_xco = nodes_xco;
-    new_nodes_yco = nodes_yco;
-    new_links_id = links_id;
-    new_links_fromNode = links_fromNode
-    new_links_toNode = links_toNode
-    new_links_length = links_length
-    new_links_freeSpeed = links_freeSpeed
-    new_links_capacity = links_capacity
-    new_links_kJam = links_kJam
+    new_nodes_id = nodes.get('ID')
+    new_nodes_xco = nodes.get('xco')
+    new_nodes_yco = nodes.get('yco')
+    new_links_id = links.get('ID')
+    new_links_fromNode = links.get('fromNode')
+    new_links_toNode = links.get('toNode')
+    new_links_length = links.get('length')
+    new_links_freeSpeed = links.get('freeSpeed')
+    new_links_capacity = links.get('capacity')
+    new_links_kJam = links.get('KJam')
     new_ODmatrices = ODmatrices
 
     #local name everything...
@@ -33,10 +33,10 @@ def buildDummyNodesAndLinks(nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode
 
     map_dummyorigins = []
 
-    linkToNode_list = links_toNode #local rename
+    linkToNode_list = new_links_toNode #local rename
 
-    linkFromNode_list = links_fromNode
-
+    linkFromNode_list = new_links_fromNode
+    #.astype.
 
     for i in range(0,origins.shape[0]):
         outgoing_links = np.where(linkFromNode_list==origins[i])[0]
@@ -59,7 +59,7 @@ def buildDummyNodesAndLinks(nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode
         new_nodes_yco = np.append(new_nodes_yco, np.asarray(new_nodes_yco[issued_origins[i]]-0.000001))
 
         new_links_id = np.append(new_links_id, np.asarray(new_links_id.shape[0]+1))
-        new_links_fromNode = np.append(new_links_fromNode, np.asarray(new_nodes_id.shape[0]))
+        new_links_fromNode = np.append(new_links_fromNode,np.asarray(new_nodes_id.shape[0]-1))
         new_links_toNode = np.append(new_links_toNode, np.asarray(issued_origins[i]))
         new_links_length = np.append(new_links_length, np.asarray(0.05))
         new_links_freeSpeed = np.append(new_links_freeSpeed, np.asarray(60))
@@ -87,7 +87,7 @@ def buildDummyNodesAndLinks(nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode
             if(rows>0):
 
                 addrow =addrow+1
-                udpate_ODmatrices_cell=lil_matrix((rows,cols))
+                udpate_ODmatrices_cell=coo_matrix((rows,cols))
                 new_ODmatrices[0,t]=vstack([new_ODmatrices[0,t],udpate_ODmatrices_cell]).tolil()
             #INCREMENT OF NEW ROW COMPLETED
 
@@ -107,7 +107,7 @@ def buildDummyNodesAndLinks(nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode
         incoming_links = np.where(linkToNode_list==destinations[i])[0]
 
         if outgoing_links.size==0 and incoming_links.size==0:
-            print('Destinations '+destinations[i]+' has no incoming or outgoing links!')
+            print('Destinations ',destinations[i],' has no incoming or outgoing links!')
         elif (incoming_links.size>=1):
             #print('get new origin in the list')
             issued_destinations.append(destinations[i])
@@ -119,8 +119,8 @@ def buildDummyNodesAndLinks(nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode
         new_nodes_yco = np.append(new_nodes_yco, np.asarray(new_nodes_yco[issued_destinations[i]]-0.000001))
 
         new_links_id = np.append(new_links_id, np.asarray(new_links_id.shape[0]+1))
-        new_links_fromNode = np.append(new_links_fromNode, np.asarray(new_nodes_id.shape[0]))
-        new_links_toNode = np.append(new_links_toNode, np.asarray(issued_destinations[i]))
+        new_links_fromNode = np.append(new_links_fromNode, np.asarray(issued_destinations[i]))
+        new_links_toNode = np.append(new_links_toNode, np.asarray(new_nodes_id.shape[0]-1))
         new_links_length = np.append(new_links_length, np.asarray(0.05))
         new_links_freeSpeed = np.append(new_links_freeSpeed, np.asarray(60))
         new_links_capacity = np.append(new_links_capacity, np.asarray(1000000))
@@ -144,7 +144,7 @@ def buildDummyNodesAndLinks(nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode
                 put in extra rows and columns in each ODmatrice sparse lil_matrix.
                 Hence avoiding the index overflow issue due to the immutable length property of numpy sparse matrix
                 '''
-                udpate_ODmatrices_cell=lil_matrix((rows, cols))
+                udpate_ODmatrices_cell=coo_matrix((rows, cols))
                 new_ODmatrices[0,t]=hstack([new_ODmatrices[0,t],udpate_ODmatrices_cell]).tolil()
             #use hstack and vstack to complete ODmatrice reshape
 
@@ -155,7 +155,7 @@ def buildDummyNodesAndLinks(nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode
             '''add new column'''
             if(new_ODmatrices[0,t].shape[0]<new_ODmatrices[0,t].shape[1]):
                 addrow =addrow+1
-                udpate_ODmatrices_cell=lil_matrix((new_ODmatrices[0,t].shape[1]-new_ODmatrices[0,t].shape[0],new_ODmatrices[0,t].shape[1]))
+                udpate_ODmatrices_cell=coo_matrix((new_ODmatrices[0,t].shape[1]-new_ODmatrices[0,t].shape[0],new_ODmatrices[0,t].shape[1]))
                 new_ODmatrices[0,t]=vstack([new_ODmatrices[0,t],udpate_ODmatrices_cell]).tolil()
             #use hstack and vstack to complete ODmatrice reshape
 
@@ -168,4 +168,7 @@ def buildDummyNodesAndLinks(nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode
 
             new_ODmatrices[0,t][map_dummydestinations[i,1]-1,:]=np.zeros((1,new_ODmatrices[0,t].shape[1]))
 
-    return new_nodes_id, new_nodes_xco, new_nodes_yco, new_links_id, new_links_fromNode, new_links_toNode, new_links_length,new_links_freeSpeed, new_links_capacity, new_links_kJam, new_ODmatrices
+    newlinks = {'ID': new_links_id, 'fromNode': new_links_fromNode, 'toNode': new_links_toNode,
+             'length': new_links_length, 'freeSpeed': new_links_freeSpeed, 'capacity': new_links_capacity, 'KJam': new_links_kJam}
+    newnodes = {'ID': new_nodes_id.astype(np.int), 'xco': new_nodes_xco, 'yco': new_nodes_yco}
+    return newnodes, newlinks, new_ODmatrices

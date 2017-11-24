@@ -7,87 +7,71 @@ The essential java class is a pair comparator,
 Suggests to take a look at the Node object and write a new comparator in python.
 '''
 import numpy as np
+import numpy.matlib
 from buildDummyNodesAndLinks import buildDummyNodesAndLinks
 from buildODmatrix import buildODmatrix
+from cvn2tt import cvn2tt
+import math
+
 #------------------file inport --------------------#
 
 #scipy module is required to inport .mat matlab workspace file
-import scipy.io as sio
+import scipy.io
 
-#load all input workspaces
-load = sio.loadmat('MS-DTA/small_case.mat')
+input_mat = scipy.io.loadmat('MS-DTA/small_case.mat')
+nodes = input_mat['nodes']
+links = input_mat['links']
+ODmatrices = input_mat['ODmatrices']
 
-
-#find the corrsponding name in the workspace, each name is a ndnumpy array
-
-ODmatrices = load['ODmatrices']
-nodes = load['nodes']
-links = load['links']
-links_id = links[:,0]-1 #<--to match with python index style.
-
-links_fromNode = np.zeros((links_id.shape[0]))
-links_toNode = np.zeros((links_id.shape[0]))
-for i in range(0, links_id.shape[0]):
-    links_fromNode[i]=np.where(nodes[:,0]==links[i,1])[0][0]
-    links_toNode[i] = np.where(nodes[:,0]==links[i,2])[0][0]
-
-links_length = links[:,3]
-links_freeSpeed = links[:,4]
-links_capacity = links[:,5]
-links_kJam = links[:,6]
-
-nodes = load['nodes']
-original_node_id = nodes[:,0]
-nodes_id = np.arange(0,nodes.shape[0])
-nodes_xco = nodes[:,1]
-nodes_yco = nodes[:,2]
+ID = links[:, 0]
+ID = np.expand_dims(ID, axis=1)
 
 
+fromNode = np.array([])
+toNode = np.array([])
+for i in range(links.shape[0]):
+    dummy = np.nonzero(nodes[:, 0] == links[i, 1])[0]
+    fromNode = np.append(fromNode, dummy)
+    dummy = np.nonzero(nodes[:, 0] == links[i, 2])[0]
+    toNode = np.append(toNode, dummy)
+
+length = links[:, 3]
+freeSpeed = links[:, 4]
+capacity = links[:, 5]
+KJam = links[:, 6]
+links = {'ID': ID.astype(np.int), 'fromNode': fromNode.astype(np.int), 'toNode': toNode.astype(np.int),
+         'length': length, 'freeSpeed': freeSpeed, 'capacity': capacity, 'KJam': KJam}
 
 
-
-from scipy.sparse import lil_matrix #list of list format sparse matrix, the equivalence of sparse matrix in matlab
+original_node_id = nodes[:, 0]
+ID = np.arange(1, nodes.shape[0]+1)
+xco = nodes[:, 1]
+yco = nodes[:, 2]
+nodes = {'ID': ID.astype(np.int), 'xco': xco, 'yco': yco}
 
 
 
-#===========function: buildDummyNodesAndLinks========
-'''
-Function name: buildDummyNodesAndLinks
-@input: all nodes , links attributes, ODmatrices
-@return: new nodes, links, ODmatrices attributes.
-'''
-nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode,links_toNode,links_length,links_freeSpeed,links_capacity,links_kJam,ODmatrices = buildDummyNodesAndLinks(nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode,links_toNode,links_length,links_freeSpeed,links_capacity,links_kJam,ODmatrices)
 
-#------------------OK--------------
 
-#==================end of function===================
 
+nodes, links, ODmatrices = buildDummyNodesAndLinks(nodes, links, ODmatrices)
 dt = 0.5
 totT = round(20/dt)
 timeSeries = np.arange(0.0,0.5*(ODmatrices.shape[1]),0.5)
 
-#===========function: buildOdmatrix==================
-'''
-Function name: buildODmatrix
-@input: ODmatrices, timeSeries, dt,totT
-@output: ODmatrix
-'''
-
 ODmatrix,origins,destinations = buildODmatrix(ODmatrices,timeSeries,dt,totT)
 
-#--------------OK--------------
+from scipy.interpolate import interp1d
 
-#==================end of function===================
-'''needs complete'''
-'''set up dynamic equilibrium simulation'''
+
 rc_dt = 10*dt
 max_It = 1
 rc_agg = "last"
 
 
-from scipy.interpolate import interp1d
-def DTA_MSA(nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode,links_toNode,links_length,links_freeSpeed,links_capacity,links_kJam,origins,destinations, ODmatrix, dt, totT, rc_dt, maxIt, rc_agg):
 
+def DTA_MSA(nodes, links,origins,destinations, ODmatrix, dt, totT, rc_dt, maxIt, rc_agg):
+    from allOrNothingTF import allOrNothingTF
 
     #pass in all variables.
     '''
@@ -100,61 +84,158 @@ def DTA_MSA(nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode,links_toNode,li
         maxIt= 20
 
     #initialization
-    totNodes = nodes_id.shape[0] #<--row.
-    totLinks = links_toNode.shape[0]
-    totDest= destinations.shape[0] #<--only 1 dimension, or len(destinations), if in form of a list.
+    totNodes = len(nodes.get('ID')) #<--row.
+    totLinks = len(links.get('toNode'))
+    totDest = len(destinations) #<--only 1 dimension, or len(destinations), if in form of a list.
 
     cvn_up = np.zeros((totLinks,totT+1, totDest))
     cvn_down = np.zeros((totLinks,totT+1, totDest))
 
     it = 0
     if(cvn_up.ndim>3):
-        simTT = cvn2tt(np.sum(cvn_up,2), np.sum(cvn_up,2),dt,totT,links_id,links_fromNode,links_toNode,links_length,links_freeSpeed,links_capacity,links_kJam)
+        simTT = cvn2tt(np.sum(cvn_up,2), np.sum(cvn_up,2),dt,totT,links)
     else:
-        simTT = cvn2tt(cvn_up, cvn_up,dt,totT,links_id,links_fromNode,links_toNode,links_length,links_freeSpeed,links_capacity,links_kJam)
+        simTT = cvn2tt(cvn_up, cvn_up,dt,totT,links)
 
     #simTT OK.
+    import math
+    gap_dt = math.inf
 
-    gap_dt = inf
     TF = []#or numpy.zeros(0)
-    return 'test complete'
+
+    TF_new, dummy1, dummy2 = allOrNothingTF(nodes,links,destinations,simTT,cvn_up,dt,totT,rc_dt,rc_agg)
+
+#=======================NodeModel======================
 
 
-'''
-    return simTT
-'''
-def cvn2tt(cvn_up, cvn_down, dt, totT, links_id,links_fromNode,links_toNode,links_length,links_freeSpeed,links_capacity,links_kJam):
 
-    simTT = np.zeros((links_id.shape[0],totT+1))#<--length of the links_id
+    def LTM_MC(nodes, links, origins, destinaions,ODmatrix, dt, totT, TF):
+        totLinks = len(links.get('fromNode'))
+        totDest = len(destinations)
+        timeSlices = np.arange(0.0,totT+1,1)*0.5
 
-    timeSteps = dt*np.arange(0,totT+1, 1)
+        cvn_up = np.zeros((totLinks, totT+1, totDest))
+        cvn_down = np.zeros((totLinks, totT+1, totDest))
 
-    for l in range(0, links_id.shape[0]):
-        down, iun = np.unique(cvn_down[l,:], return_index=True)
-        if down.shape[0]<=1:
-            simTT[l,:]=links_length[l]/links_freeSpeed[l]
+        fromNodes= links.get('fromNode')
+        toNodes = links.get('toNode')
+        freeSpeeds = links.get('freeSpeed')
+        capacities = links.get('capacity')
+        kJams = links.get('KJam')
+        lengths = links.get('length')
+        wSpeeds = capacities/(kJams-capacities/freeSpeeds)
+
+        originsAndDest = np.append(origins,destinations)
+        normalNodes = np.setdiff1d(nodes.get('ID')-1,originsAndDest)
+        #the problem is initialized ID as 1.2.3... not good.. so need subtract 1
+
+        def loadOriginNodes(t):
+            for o_index in range(0, len(origins)):
+                o = origins[o_index]
+                outgoingLinks = np.where(fromNodes==o)[0]
+                for l_index in range(0, len(outgoingLinks)):
+                    l = outgoingLinks[l_index]
+                    for d_index in range(0,totDest):
+                        SF_d = TF[o,t-1,d_index]*np.sum(ODmatrix[o_index, d_index, t-1])*dt
+                        cvn_up[l,t,d_index]=cvn_up[l,t-1,d_index]+SF_d
+
+        def findCVN(cvn, time, timeSlices, dt):
+            if time <= timeSlices[0]:
+                val = cvn[0, 0, :]
+            elif time >= timeSlices[-1]:
+                val = cvn[0, -1, :]
+            else:
+                t1 = math.ceil(time / dt)
+                t2 = t1 + 1
+                val = cvn[t1-1] + (time/dt - t1 + 1) * (cvn[t2-1] - cvn[t1-1])
+            return val
+
+        def calculateDestSendFlow(l,t):
+
+            SFCAP = capacities[l]*dt
+            time = timeSlices[t]-lengths[l]/freeSpeeds[l]
+            val = findCVN(cvn_up[l,:,:],time,timeSlices,dt)
+            SF =val-cvn_down[l,t-1,:]
+            if SF.all()>SFCAP:
+                red = SFCAP/np.sum(SF)
+                SF = red*SF
+            return SF
+
+        def calculateReceivingFlow_VQ(l):
+            RF = capacities[l]*dt
+            return RF
+
+        def calculateReceivingFlow_HQ(l,t):
+            RF = capacities[l]*dt
+            val = np.sum(cvn_down[l,t-1,:])+kJams[l]*lengths[l]
+            RF = min(RF,val-np.sum(cvn_up[l,t-1,:]))
+            return RF
+        def calculateReceivingFlow_FQ(l,t):
+            RF = capacities[l]*dt
+            time = timeSlices[t]-lengths[l]/wSpeeds[l]
+            val = findCVN(np.sum(cvn_down[l,:,:],axis=1),time,timeSlices,dt)+kJams[l]*lengths[l]
+            RF = min(RF,val-np.sum(cvn_down[l,t-1,:]))
+            RF = max(RF,np.zeros(RF.shape))
+            return RF
+        def calculateTurningFractions(n,t):
+            TF_n = np.zeros((nbIn, nbOut))
+            if nbOut ==1:
+                TF_n[0:nbIn,0]=1
+            else:
+                for d in range(0,totDest):
+                    TF_n = TF_n+np.matlib.repmat(np.expand_dims(SF_d[:,d],axis=1),1,nbOut)*TF[n,t,d]
+
+                TF_n = TF_n/np.matlib.repmat(np.expand_dims(np.finfo(float).eps+np.sum(TF_n,axis=1),axis=1),1,nbOut)
+            return TF_n
+
+        for t in range(1,totT+2):
+            loadOriginNodes(t)
+
+            for nIndex in range(0,len(normalNodes)):
+                n = normalNodes[nIndex]
+                incomingLinks = np.where(toNodes == n)[0]
+                nbIn = len(incomingLinks)
+                SF_d = np.zeros((nbIn, totDest))
+                SF_tot = np.zeros((nbIn,1))
+                SF = np.zeros((nbIn,1))
+
+                for l_index in range(0, nbIn):
+                    l = incomingLinks[l_index]
+                    SF_d[l_index,:]=calculateDestSendFlow(l,t)
+                    SF_tot[l_index]= np.sum(SF_d[l_index,:])
+                    SF[l_index]=min(capacities[l]*dt,SF_tot[l_index])
+
+
+                outgoingLinks = np.where(fromNodes==n)[0]
+                nbOut = len(outgoingLinks)
+                RF = np.zeros((nbOut,1))
+                for l_index in range(0,nbOut):
+                    l = outgoingLinks[l_index]
+                    RF[l_index] = calculateReceivingFlow_FQ(l,t)
+
+                TF_n = calculateTurningFractions(n,t-1)
+
+                TransferFlow = NodeModel(nbIn, nbOut, SF,TF_n, RF, capacities[incomingLinks]*dt)
+
+    while it<maxIt and gap_dt>0.000001:
+        it = it+1
+        if len(TF)==0:
+            TF = TF_new
         else:
-            f = interp1d(down,timeSteps[iun])
-            interp = f(cvn_up[l,:])
-            simTT[l,:]=np.maximum(interp-dt*np.arange(0,totT+1,1),links_length[l]/links_freeSpeed[l])
-            simTT[l,cvn_up[l,:]-cvn_down[l,:]<0.001] = links_length[l]/links_freeSpeed[l]
-            for t in range(1,totT+2):
-                simTT[l,t]= np.maximum(simTT[l,t],simTT[l,t-1]-dt)
-
-    return simTT
+            for n in range(0,totNodes):
+                for t in range(1,totT):
+                    for d in range(1,totDest):
+                        update = TF_new[n][t][d]-TF[n][t][d]
+                        TF[n][t][d] = TF[n][t][d]-1/it*update
 
 
+        cvn_up, cvn_down =LTM_MC(nodes,links, origins, destinations, ODmatrix, dt, totT, TF)
 
 
 
+    return "testtesttest"
 
-a = DTA_MSA(nodes_id,nodes_xco,nodes_yco,links_id,links_fromNode,links_toNode,links_length,links_freeSpeed,links_capacity,links_kJam,origins,destinations, ODmatrix, dt, totT, rc_dt, max_It, rc_agg);
-print(a)
-'''needs complete'''
-'''transform CVN values to travel times'''
+a = DTA_MSA(nodes,links,origins,destinations,ODmatrix, dt, totT, rc_dt,max_It,rc_agg)
+
+
 #[simTT] = cvn2tt(sum(cvn_up,3),sum(cvn_down,3),dt,totT,links);
-
-
-
-
-

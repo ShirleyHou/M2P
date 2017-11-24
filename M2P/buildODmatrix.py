@@ -1,4 +1,3 @@
-
 from scipy.sparse import lil_matrix
 import numpy as np
 
