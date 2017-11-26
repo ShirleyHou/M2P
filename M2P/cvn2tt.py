@@ -15,8 +15,9 @@ def cvn2tt(cvn_up, cvn_down, dt, totT, links):
         if down.shape[0]<=1:
             simTT[l,:]=links.get('length')[l]/links.get('freeSpeed')[l]
         else:
-            f = interp1d(down,timeSteps[iun])
-            interp = f(cvn_up[l,:])
+            f = interp1d(down,timeSteps[iun],bounds_error=False)
+            interp = np.nan_to_num(f(cvn_up[l,:]))
+
             simTT[l,:]=np.maximum(interp-dt*np.arange(0,totT+1,1),links.get('length')[l]/links.get('freeSpeed')[l])
             simTT[l,cvn_up[l,:]-cvn_down[l,:]<0.001] = links.get('length')[l]/links.get('freeSpeed')[l]
             for t in range(1,totT+1):

@@ -1,11 +1,5 @@
 #main program
 
-
-'''
-Notice currently find no clue how to use a compiled java class in python.
-The essential java class is a pair comparator,
-Suggests to take a look at the Node object and write a new comparator in python.
-'''
 import numpy as np
 import numpy.matlib
 from buildDummyNodesAndLinks import buildDummyNodesAndLinks
@@ -258,7 +252,13 @@ def DTA_MSA(nodes, links,origins,destinations, ODmatrix, dt, totT, rc_dt, maxIt,
         TF_new, gap_dt, gap_rc = allOrNothingTF(nodes, links, destinations, simTT, cvn_up, dt, totT, rc_dt, rc_agg)
 
 
+        '''
+        TODO: plot
+        '''
+        #print("Plotting here")
 
+
+    return cvn_up, cvn_down, TF
 #----after while------
 
 
@@ -266,7 +266,12 @@ def DTA_MSA(nodes, links,origins,destinations, ODmatrix, dt, totT, rc_dt, maxIt,
 
 
 
-a = DTA_MSA(nodes,links,origins,destinations,ODmatrix, dt, totT, rc_dt,max_It,rc_agg)
+cvn_up,cvn_down, TF = DTA_MSA(nodes,links,origins,destinations,ODmatrix, dt, totT, rc_dt,max_It,rc_agg)
 
 
-#[simTT] = cvn2tt(sum(cvn_up,3),sum(cvn_down,3),dt,totT,links);
+simTT = cvn2tt(np.sum(cvn_up,axis=2),np.sum(cvn_down,axis=2),dt,totT,links)
+
+print("END")
+'''
+TODO: plot 
+'''
