@@ -11,6 +11,7 @@ import numpy.matlib
 from buildDummyNodesAndLinks import buildDummyNodesAndLinks
 from buildODmatrix import buildODmatrix
 from cvn2tt import cvn2tt
+from NodeModel import NodeModel
 import math
 
 #------------------file inport --------------------#
@@ -110,6 +111,7 @@ def DTA_MSA(nodes, links,origins,destinations, ODmatrix, dt, totT, rc_dt, maxIt,
 
 
     def LTM_MC(nodes, links, origins, destinaions,ODmatrix, dt, totT, TF):
+        eps = np.finfo(float).eps
         totLinks = len(links.get('fromNode'))
         totDest = len(destinations)
         timeSlices = np.arange(0.0,totT+1,1)*0.5
@@ -139,6 +141,16 @@ def DTA_MSA(nodes, links,origins,destinations, ODmatrix, dt, totT, rc_dt, maxIt,
                         SF_d = TF[o,t-1,d_index]*np.sum(ODmatrix[o_index, d_index, t-1])*dt
                         cvn_up[l,t,d_index]=cvn_up[l,t-1,d_index]+SF_d
 
+        def loadDestinationNodes(t):
+            for d_index in range(0, len(destinations)):
+                d = destinations[d_index]
+                incomingLinks = np.where(toNodes==d)[0]
+                for l_index in range(0, len(incomingLinks)):
+                    l=incomingLinks[l_index]
+                    for d_index in range(0, totDest):
+                        SF_d = findCVN(cvn_up[l,:,:],timeSlices[t]-lengths[l]/freeSpeeds[l],timeSlices,dt)-cvn_down[l, t-1,:]
+                        cvn_down[l,t,:]=cvn_down[l,t-1,:]+SF_d
+
         def findCVN(cvn, time, timeSlices, dt):
             if time <= timeSlices[0]:
                 val = cvn[0, 0, :]
@@ -158,7 +170,7 @@ def DTA_MSA(nodes, links,origins,destinations, ODmatrix, dt, totT, rc_dt, maxIt,
             SF =val-cvn_down[l,t-1,:]
             if SF.all()>SFCAP:
                 red = SFCAP/np.sum(SF)
-                SF = red*SF
+                SF = np.dot(red,SF)
             return SF
 
         def calculateReceivingFlow_VQ(l):
@@ -174,7 +186,7 @@ def DTA_MSA(nodes, links,origins,destinations, ODmatrix, dt, totT, rc_dt, maxIt,
             RF = capacities[l]*dt
             time = timeSlices[t]-lengths[l]/wSpeeds[l]
             val = findCVN(np.sum(cvn_down[l,:,:],axis=1),time,timeSlices,dt)+kJams[l]*lengths[l]
-            RF = min(RF,val-np.sum(cvn_down[l,t-1,:]))
+            RF = min(RF,val-np.sum(cvn_up[l,t-1,:]))
             RF = max(RF,np.zeros(RF.shape))
             return RF
         def calculateTurningFractions(n,t):
@@ -188,7 +200,7 @@ def DTA_MSA(nodes, links,origins,destinations, ODmatrix, dt, totT, rc_dt, maxIt,
                 TF_n = TF_n/np.matlib.repmat(np.expand_dims(np.finfo(float).eps+np.sum(TF_n,axis=1),axis=1),1,nbOut)
             return TF_n
 
-        for t in range(1,totT+2):
+        for t in range(1,totT+1):
             loadOriginNodes(t)
 
             for nIndex in range(0,len(normalNodes)):
@@ -217,6 +229,17 @@ def DTA_MSA(nodes, links,origins,destinations, ODmatrix, dt, totT, rc_dt, maxIt,
 
                 TransferFlow = NodeModel(nbIn, nbOut, SF,TF_n, RF, capacities[incomingLinks]*dt)
 
+                red = np.sum(TransferFlow, axis=1)/(eps+SF_tot).transpose()
+                for d in range(0, totDest):
+                    cvn_down[incomingLinks,t,d]=cvn_down[incomingLinks,t-1,d]+red*SF_d[:,d]
+                    cvn_up[outgoingLinks,t,d]=cvn_up[outgoingLinks,t-1,d]+np.dot((red*SF_d[:,d]),TF[n][t-1][d]).squeeze()
+
+
+            loadDestinationNodes(t)
+
+
+        return cvn_up, cvn_down
+
     while it<maxIt and gap_dt>0.000001:
         it = it+1
         if len(TF)==0:
@@ -228,12 +251,20 @@ def DTA_MSA(nodes, links,origins,destinations, ODmatrix, dt, totT, rc_dt, maxIt,
                         update = TF_new[n][t][d]-TF[n][t][d]
                         TF[n][t][d] = TF[n][t][d]-1/it*update
 
-
         cvn_up, cvn_down =LTM_MC(nodes,links, origins, destinations, ODmatrix, dt, totT, TF)
 
+        simTT = cvn2tt(np.sum(cvn_up,axis=2),np.sum(cvn_down, axis=2), dt,totT, links)
+
+        TF_new, gap_dt, gap_rc = allOrNothingTF(nodes, links, destinations, simTT, cvn_up, dt, totT, rc_dt, rc_agg)
 
 
-    return "testtesttest"
+
+#----after while------
+
+
+
+
+
 
 a = DTA_MSA(nodes,links,origins,destinations,ODmatrix, dt, totT, rc_dt,max_It,rc_agg)
 

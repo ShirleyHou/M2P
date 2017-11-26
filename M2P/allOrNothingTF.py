@@ -47,11 +47,11 @@ def allOrNothingTF(nodes, links, destinations, simTT, cvn_up, dt, totT, rc_dt, r
         import math
         for t in range(totT, -1, -1):
             for n in range(0, totNodes):
-                if (n == destinations).any():
+                if np.any(n==destinations):
                     if n != d:
                         arr_map[n, t] = math.inf
                     else:
-                        arr_map[n, t] = (t) * dt
+                        arr_map[n, t] = (t-1) * dt
                     continue
                 outgoinglinks = np.where(strN == n)[0]
                 arr = math.inf
@@ -133,17 +133,17 @@ def allOrNothingTF(nodes, links, destinations, simTT, cvn_up, dt, totT, rc_dt, r
             else:
                 # par = np.zeros((1))
                 for t in range(0, totT):
-                    a = timeRC[np.minimum(len(timeRC), next_rc) - 1]
+                    a = timeRC[np.minimum(len(timeRC), next_rc)-1]
 
                     if timeSteps[t] >= a:
                         next_rc = next_rc + 1
 
-                        par = parent[n, int(min(totT, t + tVeh))]
-                        act_t[int(min(totT, t + tVeh))] = True
+                        par = parent[n, int(min(totT+1, t + tVeh))]
+                        act_t[int(min(totT+1, t + tVeh))] = True
 
                     TF[n][t][d_index] = np.zeros((max(1, len(incomingLinks)), len(outgoingLinks)))
 
-                    TF[n][t][d_index][:, endN[outgoingLinks] == par] = 1
+                    TF[n][t][d_index][:, endN[outgoingLinks]==par] = 1
 
         gap_dt = gap_dt + np.sum(np.sum(gap[:, 1:] * np.diff(cvn_up[:, :, d_index], n=1, axis=1)))
 

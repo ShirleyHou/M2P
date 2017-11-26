@@ -17,7 +17,6 @@ def dijkstra(matrix, source):
     '''
     SparsePy = matrix.tocsr()
     matrixPy = SparsePy.todense()
-    source = 38
     n = matrixPy.shape[0]
     parents = np.zeros((43, 1))
     distance = np.full((43, 1), np.inf)
