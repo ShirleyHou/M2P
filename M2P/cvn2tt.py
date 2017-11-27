@@ -19,7 +19,7 @@ def cvn2tt(cvn_up, cvn_down, dt, totT, links):
             interp = np.nan_to_num(f(cvn_up[l,:]))
 
             simTT[l,:]=np.maximum(interp-dt*np.arange(0,totT+1,1),links.get('length')[l]/links.get('freeSpeed')[l])
-            simTT[l,cvn_up[l,:]-cvn_down[l,:]<0.001] = links.get('length')[l]/links.get('freeSpeed')[l]
+            simTT[l,cvn_up[l,:]-cvn_down[l,:]<10-3] = links.get('length')[l]/links.get('freeSpeed')[l]
             for t in range(1,totT+1):
                 simTT[l,t]= np.maximum(simTT[l,t],simTT[l,t-1]-dt)
 

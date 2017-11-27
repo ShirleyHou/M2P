@@ -41,6 +41,7 @@ h = figure;
 semilogy(0,NaN);
 start_time = cputime;
 
+
 %Maximum number of iterations
 if isempty(maxIt)
     maxIt = 20; 
@@ -103,6 +104,7 @@ while it < maxIt && gap_dt > 10^-6
     figure(h) 
     hold on
     time=cputime-start_time;
+   
     a=semilogy(time,gap_dt,'r.');
     b=semilogy(time,gap_rc,'ob');
     legend([a,b],'gap based on simulation interval','gap based on route choice interval');
