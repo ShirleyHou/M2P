@@ -2,13 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="37c25271-d6eb-48d9-af24-132d39f06325" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/M2P/LTM_MC.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/M2P/MS-DTA/info_amir_2.mat" afterPath="$PROJECT_DIR$/M2P/MS-DTA/info_amir_2.mat" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/M2P/DTA_MSA.py" afterPath="$PROJECT_DIR$/M2P/DTA_MSA.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/M2P/MS-DTA/DTA_MSA.m" afterPath="$PROJECT_DIR$/M2P/MS-DTA/DTA_MSA.m" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/M2P/cvn2tt.py" afterPath="$PROJECT_DIR$/M2P/cvn2tt.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/M2P/main_small.py" afterPath="$PROJECT_DIR$/M2P/main_small.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -47,8 +41,8 @@
       <file leaf-file-name="DTA_MSA.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/M2P/DTA_MSA.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="434">
-              <caret line="75" column="16" lean-forward="false" selection-start-line="75" selection-start-column="16" selection-end-line="75" selection-end-column="16" />
+            <state relative-caret-position="414">
+              <caret line="81" column="71" lean-forward="true" selection-start-line="81" selection-start-column="71" selection-end-line="81" selection-end-column="71" />
               <folding>
                 <element signature="e#0#25#0" expanded="true" />
               </folding>
@@ -751,8 +745,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/M2P/DTA_MSA.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="434">
-          <caret line="75" column="16" lean-forward="false" selection-start-line="75" selection-start-column="16" selection-end-line="75" selection-end-column="16" />
+        <state relative-caret-position="414">
+          <caret line="81" column="71" lean-forward="true" selection-start-line="81" selection-start-column="71" selection-end-line="81" selection-end-column="71" />
           <folding>
             <element signature="e#0#25#0" expanded="true" />
           </folding>

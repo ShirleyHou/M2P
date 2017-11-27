@@ -41,6 +41,7 @@ def DTA_MSA(nodes, links,origins,destinations, ODmatrix, dt, totT, rc_dt, maxIt,
 
     import matplotlib.pyplot as plt
     plt.figure()
+    count = 0
     while it<maxIt and gap_dt>0.000001:
         it = it+1
         if len(TF)==0:
@@ -65,14 +66,20 @@ def DTA_MSA(nodes, links,origins,destinations, ODmatrix, dt, totT, rc_dt, maxIt,
         '''
         timecount = time.clock()-start_time
         a = plt.semilogy(timecount,gap_dt,'r.',label='gap based on simulation interval' )
-        b = plt.semilogy(timecount,gap_rc, 'ob',label= 'gap based on route choice interval')
+        b = plt.semilogy(timecount,gap_rc, 'ob',mfc='none',label= 'gap based on route choice interval')
 
+        if(count==0):
+            plt.legend()
 
-        #plt.legend([a,b],'gap based on simulation interval','gap based on route choice interval')
         plt.pause(0.01)
+        count=count+1
 
         #print("Plotting here")
 
-    plt.legend()
+    if it>maxIt:
+        print("Maximum Iteration limit reached: ", maxIt, "Gap: ", gap_dt)
+    else:
+        print("Convergence reached in iteration ", it, "Gap: ", gap_dt)
+
     return cvn_up, cvn_down, TF
 #----after while------
