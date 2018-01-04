@@ -33,7 +33,7 @@ def allOrNothingTF(nodes, links, destinations, simTT, cvn_up, dt, totT, rc_dt, r
         netCostMatrix = coo_matrix((simTT[:, -1], (endN, strN)), shape=(totNodes, totNodes))
 
         par, dist, path = dijkstra(netCostMatrix, d)
-        # par & dist: 43*1
+
 
 
 
@@ -137,9 +137,10 @@ def allOrNothingTF(nodes, links, destinations, simTT, cvn_up, dt, totT, rc_dt, r
 
                     if timeSteps[t] >= a:
                         next_rc = next_rc + 1
-
-                        par = parent[n, int(min(totT+1, t + tVeh))]
-                        act_t[int(min(totT+1, t + tVeh))] = True
+                        #index issue: par = parent[n, int(min(totT+1, t + tVeh))]
+                        par = parent[n, int(min(totT, t + tVeh))]
+                        #index issue: act_t[int(min(totT+1, t + tVeh))] = True
+                        act_t[int(min(totT, t + tVeh))] = True
 
                     TF[n][t][d_index] = np.zeros((max(1, len(incomingLinks)), len(outgoingLinks)))
 

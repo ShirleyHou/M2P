@@ -18,9 +18,9 @@ def dijkstra(matrix, source):
     SparsePy = matrix.tocsr()
     matrixPy = SparsePy.todense()
     n = matrixPy.shape[0]
-    parents = np.zeros((43, 1))
-    distance = np.full((43, 1), np.inf)
-    visited = np.full([43, 1], np.False_)
+    parents = np.zeros((n, 1))
+    distance = np.full((n, 1), np.inf)
+    visited = np.full([n, 1], np.False_)
 
 
     # Add the source node the list

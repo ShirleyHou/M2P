@@ -8,8 +8,8 @@ def buildODmatrix(ODmatrices,timeSeries,dt,totT):
     for i in range(0,ODmatrices.shape[1]):
         sumOD = sumOD + ODmatrices[0,i]
 
-    origins = np.where(np.sum(sumOD,1)>0)[0] #row  index
-    destinations = np.where(np.sum(sumOD,0)>0)[1] #col  index
+    origins = np.expand_dims(np.where(np.sum(sumOD,1)>0)[0],axis = 1) #row  index
+    destinations = np.where(np.sum(sumOD,0)>0)[0] #col  index
 
 
     timeSteps = dt*np.arange(0,totT+0.5,1)
@@ -27,12 +27,12 @@ def buildODmatrix(ODmatrices,timeSeries,dt,totT):
         sliceB = np.where(timeSeries<timeSteps[t+1])[0] #<--smaller
         sliceB = sliceB[sliceB.size-1]
 
-        #tempSlices = np.asarray(np.unique(sliceA,sliceB)) #<--an array
+
         tempSlices = list(set([sliceA,sliceB]))# numpy unique does not work for filtering simple numbers.
 
         if(len(tempSlices)==1):
 
-            temp_odmatrix = ODmatrices[0,min(ODmatrices.shape[1],tempSlices[0])][origins,:][:,destinations]
+            temp_odmatrix = ODmatrices[0,min(ODmatrices.shape[1],tempSlices[0])][origins,destinations]
 
             od_matrix_cell = np.zeros((temp_odmatrix.shape[0],temp_odmatrix.shape[1]))
             for i in range(0, temp_odmatrix.shape[0]):
@@ -44,29 +44,29 @@ def buildODmatrix(ODmatrices,timeSeries,dt,totT):
 
         elif len(tempSlices)>1:
             '''be careful tempSlice is now a list, hasn't transferred to nparray yet'''
-            #tempSlices = tempSlices[0]:tempSlices[len(tempSlices)]<-- whats the point of this line in Matlab?
-            tempFrac = (timeSeries[tempSlices[1]]-timeSteps[t])/dt;
-            temp_odmatrix = tempFrac*(ODmatrices[0, tempSlices[0]][origins,:][:,destinations])
+            tempSlices = np.linspace(tempSlices[0],tempSlices[-1],tempSlices[-1]+1).astype(np.int)
+            tempFrac = (timeSeries[tempSlices[1]]-timeSteps[t])/dt
+            temp_odmatrix = tempFrac*(ODmatrices[0, tempSlices[0]][origins,destinations])
             od_matrix_cell = np.zeros((temp_odmatrix.shape[0],temp_odmatrix.shape[1]))
             for i in range(temp_odmatrix.shape[0]):
                 for j in range(temp_odmatrix.shape[1]):
                     od_matrix_cell[i,j]=temp_odmatrix[i,j]
 
-            for kk in range(2,len(tempSlices)-1):
+            for kk in range(1,len(tempSlices)-1):
 
                 tempFrac = (timeSeries[tempSlices[kk+1]]-timeSeries[tempSlices[kk]])/dt
-                temp_odmatrix = tempFrac*(ODmatrices[0, tempSlices[-1]][origins,:][:,destinations])
+                temp_odmatrix = tempFrac*(ODmatrices[0, tempSlices[-1]][origins,destinations])
                 for i in range(temp_odmatrix.shape[0]):
                     for j in range(temp_odmatrix.shape[1]):
                         od_matrix_cell[i,j]=od_matrix_cell[i,j]+temp_odmatrix[i,j]
 
             tempFrac = (timeSteps[t+1]-timeSeries[tempSlices[-1]])/dt
 
-            temp_odmatrix = tempFrac*ODmatrices[0,tempSlices[-1]][origins,:][:,destinations]
+            temp_odmatrix = tempFrac*ODmatrices[0,tempSlices[-1]][origins,destinations]
 
             for i in range(temp_odmatrix.shape[0]):
                 for j in range(temp_odmatrix.shape[1]):
-                    od_matrix_cell[i,j]=od_matrix_cell+temp_odmatrix[i,j]
+                    od_matrix_cell[i,j]=od_matrix_cell[i,j]+temp_odmatrix[i,j]
 
             od_matrix.append(od_matrix_cell)
 

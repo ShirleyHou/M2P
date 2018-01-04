@@ -15,7 +15,7 @@ plt.close("all")
 #scipy module is required to inport .mat matlab workspace file
 import scipy.io
 
-input_mat = scipy.io.loadmat('MS-DTA/small_case.mat')
+input_mat = scipy.io.loadmat('info2_small.mat')
 nodes = input_mat['nodes']
 links = input_mat['links']
 ODmatrices = input_mat['ODmatrices']

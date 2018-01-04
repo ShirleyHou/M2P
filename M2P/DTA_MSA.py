@@ -1,6 +1,7 @@
 from LTM_MC import LTM_MC
 import numpy as np
 from cvn2tt import cvn2tt
+import multiprocessing
 
 def DTA_MSA(nodes, links,origins,destinations, ODmatrix, dt, totT, rc_dt, maxIt, rc_agg):
     from allOrNothingTF import allOrNothingTF
@@ -19,6 +20,8 @@ def DTA_MSA(nodes, links,origins,destinations, ODmatrix, dt, totT, rc_dt, maxIt,
     #initialization
     totNodes = len(nodes.get('ID')) #<--row.
     totLinks = len(links.get('toNode'))
+    #destinations = np.squeeze(destinations,axis=0)-1
+    #origins = np.squeeze(origins,axis=0)-1
     totDest = len(destinations) #<--only 1 dimension, or len(destinations), if in form of a list.
 
     cvn_up = np.zeros((totLinks,totT+1, totDest))
@@ -52,6 +55,8 @@ def DTA_MSA(nodes, links,origins,destinations, ODmatrix, dt, totT, rc_dt, maxIt,
                     for d in range(1,totDest):
                         update = TF_new[n][t][d]-TF[n][t][d]
                         TF[n][t][d] = TF[n][t][d]-1/it*update
+
+
 
         cvn_up, cvn_down =LTM_MC(nodes,links, origins, destinations, ODmatrix, dt, totT, TF)
 

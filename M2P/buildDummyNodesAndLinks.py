@@ -153,6 +153,7 @@ def buildDummyNodesAndLinks(nodes, links, ODmatrices):
 
 
             '''add new column'''
+            #use concentrate, axis = 0/1 instead of vstack/hstack
             if(new_ODmatrices[0,t].shape[0]<new_ODmatrices[0,t].shape[1]):
                 addrow =addrow+1
                 udpate_ODmatrices_cell=coo_matrix((new_ODmatrices[0,t].shape[1]-new_ODmatrices[0,t].shape[0],new_ODmatrices[0,t].shape[1]))

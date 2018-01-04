@@ -1,6 +1,7 @@
 from NodeModel import NodeModel
 import numpy as np
 import math
+import multiprocessing
 def LTM_MC(nodes, links, origins, destinations, ODmatrix, dt, totT, TF):
     eps = np.finfo(float).eps
     totLinks = len(links.get('fromNode'))
@@ -21,8 +22,8 @@ def LTM_MC(nodes, links, origins, destinations, ODmatrix, dt, totT, TF):
     originsAndDest = np.append(origins, destinations)
     normalNodes = np.setdiff1d(nodes.get('ID') - 1, originsAndDest)
 
-    # the problem is initialized ID as 1.2.3... not good.. so need subtract 1
 
+    #ODmatrix_out = TemporaryFile()
     def loadOriginNodes(t):
         for o_index in range(0, len(origins)):
             o = origins[o_index]
@@ -30,8 +31,8 @@ def LTM_MC(nodes, links, origins, destinations, ODmatrix, dt, totT, TF):
             for l_index in range(0, len(outgoingLinks)):
                 l = outgoingLinks[l_index]
                 for d_index in range(0, totDest):
-                    SF_d = TF[o, t - 1, d_index] * np.sum(ODmatrix[o_index, d_index, t - 1]) * dt
-                    cvn_up[l, t, d_index] = cvn_up[l, t - 1, d_index] + SF_d
+                        SF_d = TF[o, t - 1, d_index] * np.sum(ODmatrix[o_index, d_index, t - 1]) * dt
+                        cvn_up[l, t, d_index] = cvn_up[l, t - 1, d_index] + SF_d
 
     def loadDestinationNodes(t):
         for d_index in range(0, len(destinations)):
@@ -96,6 +97,15 @@ def LTM_MC(nodes, links, origins, destinations, ODmatrix, dt, totT, TF):
         return TF_n
 
     for t in range(1, totT + 1):
+
+        '''multiprocessing
+        pool = multiprocessing.Pool(processes=4)
+        pool.map(func, range(10))
+        pool.close()
+        pool.join()
+        '''
+
+
         loadOriginNodes(t)
 
         for nIndex in range(0, len(normalNodes)):
